@@ -15,7 +15,7 @@ engine_string = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}"
 engine = create_engine(engine_string)
 
 scope = "user-library-read"
-sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
+sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope), requests_timeout=20)
 
 liked_songs = []
 cols = ['project_id', 'order_num', 'song_id', 'song_title', 'playback', 'artist_id', 'artist_name', 'album_id',
@@ -68,7 +68,6 @@ def check_table_exists():
 
 
 def insert_songs_into_database(song):
-    table_exists = check_table_exists()
     with engine.connect() as connection:
         song_columns = {'order_num': song['order_num'], 'song_id': song['song_id'],
                         'song_title': song['song_title'], 'playback': song['playback'], 'artist_id': song['artist_id'],
@@ -77,44 +76,42 @@ def insert_songs_into_database(song):
                         'duration_min': song['duration_min']
                         }
 
-        if table_exists:
-            print('Adding songs into the database!')
-            try:
-                add_songs = "INSERT INTO liked_songs (order_num, song_id, song_title, playback, artist_id, " \
-                            "artist_name, album_id, album_name, album_cover, duration_min) " \
-                            "VALUES (:order_num, :song_id, :song_title, :playback, :artist_id, :artist_name, " \
-                            ":album_id, :album_name, :album_cover, :duration_min)"
+        print('Adding songs into the database!')
+        try:
+            add_songs = "INSERT INTO liked_songs (order_num, song_id, song_title, playback, artist_id, " \
+                        "artist_name, album_id, album_name, album_cover, duration_min) " \
+                        "VALUES (:order_num, :song_id, :song_title, :playback, :artist_id, :artist_name, " \
+                        ":album_id, :album_name, :album_cover, :duration_min)"
 
-                connection.execute(
-                    text(add_songs),
-                    song_columns
-                )
-                connection.commit()
-            except sqlalchemy.exc.IntegrityError:
-                print('The database is currently up to date!')
-                quit()
-
-        else:
-            print('Creating liked songs table.')
-
-            create_table = "CREATE TABLE liked_songs (" \
-                           "project_id VARCHAR(100) NOT NULL DEFAULT 'P001', " \
-                           "order_num BIGINT NOT NULL, " \
-                           "song_id VARCHAR(500) NOT NULL, " \
-                           "song_title VARCHAR(250) NOT NULL," \
-                           "playback VARCHAR(500) NOT NULL UNIQUE, " \
-                           "artist_id VARCHAR(500) NOT NULL, " \
-                           "artist_name VARCHAR(250) NOT NULL, " \
-                           "album_id VARCHAR(500) NOT NULL, " \
-                           "album_name VARCHAR(250) NOT NULL, " \
-                           "album_cover VARCHAR(500) NOT NULL, " \
-                           "duration_min NUMERIC(5, 2), " \
-                           "sotd_date DATE UNIQUE, " \
-                           "PRIMARY KEY (song_id), " \
-                           "FOREIGN KEY (project_id) REFERENCES projects(project_id)" \
-                           ")"
-            connection.execute(text(create_table))
+            connection.execute(
+                text(add_songs),
+                song_columns
+            )
             connection.commit()
+        except sqlalchemy.exc.IntegrityError:
+            print('The database is currently up to date!')
+            quit()
+
+        print('Creating liked songs table.')
+
+        create_table = "CREATE TABLE liked_songs (" \
+                       "project_id VARCHAR(100) NOT NULL DEFAULT 'P001', " \
+                       "order_num BIGINT NOT NULL, " \
+                       "song_id VARCHAR(500) NOT NULL, " \
+                       "song_title VARCHAR(250) NOT NULL," \
+                       "playback VARCHAR(500) NOT NULL UNIQUE, " \
+                       "artist_id VARCHAR(500) NOT NULL, " \
+                       "artist_name VARCHAR(250) NOT NULL, " \
+                       "album_id VARCHAR(500) NOT NULL, " \
+                       "album_name VARCHAR(250) NOT NULL, " \
+                       "album_cover VARCHAR(500) NOT NULL, " \
+                       "duration_min NUMERIC(5, 2), " \
+                       "sotd_date DATE UNIQUE, " \
+                       "PRIMARY KEY (song_id), " \
+                       "FOREIGN KEY (project_id) REFERENCES projects(project_id)" \
+                       ")"
+        connection.execute(text(create_table))
+        connection.commit()
 
 
 def get_existing_song_ids():
