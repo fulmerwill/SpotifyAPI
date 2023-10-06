@@ -23,7 +23,6 @@ else:
     engine_string = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}"
     engine = create_engine(engine_string)
 
-print(engine)
 scope = "user-library-read"
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope), requests_timeout=20)
 
