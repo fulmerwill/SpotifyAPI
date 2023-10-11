@@ -206,4 +206,5 @@ def main():
     print('The database is currently up to date!')
 
 
-main()
+if __name__ == '__main__':
+    main()

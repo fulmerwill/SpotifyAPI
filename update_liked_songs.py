@@ -169,7 +169,7 @@ def filter_new_songs():
 
 def update_indices(new_songs):
     print('Updating song order.')
-    count = {'count': len(new_songs)+1}
+    count = {'count': len(new_songs) + 1}
     with engine.connect() as connection:
         update_query = "UPDATE liked_songs " \
                        "SET order_num = order_num + :count"
@@ -198,4 +198,5 @@ def main():
     print('The database is currently up to date!')
 
 
-main()
+if __name__ == '__main__':
+    main()
