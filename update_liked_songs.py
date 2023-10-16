@@ -30,7 +30,7 @@ def get_saved_tracks():
     offset = 0
     limit = 50
     order_id = 1
-    while True:
+    while offset < 50:
         saved_tracks = sp.current_user_saved_tracks(limit=limit, offset=offset)
         if not saved_tracks['items']:
             break
@@ -176,7 +176,6 @@ def update_indices(new_songs):
                        "SET order_num = order_num + :count"
         connection.execute(text(update_query), count)
         connection.commit()
-
 
 def main():
     get_saved_tracks()
